@@ -16,30 +16,30 @@ dt_string = datetime.now().strftime('%y%m%d')
 ## -------------------------------------------------- TODO incorporar método 
 
 def unir_ncs():
-       path = 'input/ncs_aut/ncs/'
+       path = 'input/archivo_ncs/'
        files_names = [f for f in listdir(path) if isfile(join(path, f))]
 
        files_store = []
        
        for i in files_names: 
-              file = open(f'input/ncs_aut/ncs/{i}', 'r', encoding='ISO-8859-1')
+              file = open(f'input/archivo_ncs/{i}', 'r', encoding='ISO-8859-1')
               nc_lines = file.readlines()
               file.close()
               files_store.append(pd.read_csv(io.StringIO("\n".join(nc_lines)), sep=';', dtype='object', error_bad_lines=False))
 
        nc_df = pd.concat(files_store)
 
-       nc_df.to_csv('input/ncs_aut/ncs/output/nc_df.csv', index=False)
+       nc_df.to_csv('input/consolidado_nc.csv', index=False)
 
 unir_ncs() # method call 
 
 ## --------------------------------------------------
 
 # Files loading
-ep = pd.read_excel('input/ncs_aut/211020_empleados_planta.xlsx', dtype='object') 
-et = pd.read_excel('input/ncs_aut/211020_empleados_temporales.xlsx', dtype='object')
-df_nc = pd.read_csv('input/ncs_aut/ncs/output/nc_df.csv', dtype='object')
-df_v = pd.read_excel('input/ncs_aut/consolidado_ventas_21.xlsx', dtype='object') # Ventas 
+ep = pd.read_excel('input/211020_empleados_planta.xlsx', dtype='object') 
+et = pd.read_excel('input/211020_empleados_temporales.xlsx', dtype='object')
+df_nc = pd.read_csv('input/consolidado_nc.csv', dtype='object')
+df_v = pd.read_excel('input/consolidado_ventas_21.xlsx', dtype='object') # Ventas 
 
 # Convert numeric and date data 
 df_nc.Qcantidad = pd.to_numeric(df_nc.Qcantidad)
@@ -189,7 +189,7 @@ def send_msg_general(webhook, qty, sum, date):
     myTeamsMessage.send()
 
 
-df_nc = pd.read_csv('input/ncs_aut/ncs/output/nc_df.csv', dtype='object')
+df_nc = pd.read_csv('input/consolidado_nc.csv', dtype='object')
 df_nc.Mventa_nc = -pd.to_numeric(df_nc.Mventa_nc)
 
 df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('oct', '10')
