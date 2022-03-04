@@ -25,7 +25,7 @@ def unir_ncs():
               file = open(f'input/archivo_ncs/{i}', 'r', encoding='ISO-8859-1')
               nc_lines = file.readlines()
               file.close()
-              files_store.append(pd.read_csv(io.StringIO("\n".join(nc_lines)), sep=';', dtype='object', error_bad_lines=False))
+              files_store.append(pd.read_csv(io.StringIO("\n".join(nc_lines)), sep=';', dtype='object', on_bad_lines='skip'))
 
        nc_df = pd.concat(files_store)
 
@@ -46,18 +46,18 @@ df_nc.Qcantidad = pd.to_numeric(df_nc.Qcantidad)
 df_nc.Cvendedor = pd.to_numeric(df_nc.Cvendedor)
 df_nc.Mventa_nc = -pd.to_numeric(df_nc.Mventa_nc)
 df_nc.Hora = pd.to_numeric(df_nc.Hora)
-
 ep.Cod_Empleado  = pd.to_numeric(ep.Cod_Empleado)
 
 df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('oct', '10')
 df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('nov', '11')
 df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('dic', '12')
+df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('ene', '01')
+df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('feb', '02')
 
 df_nc.Dcompra_nvo = pd.to_datetime(df_nc.Dcompra_nvo, format='%d-%m-%Y') # TODO arreglar para español 
 
 local_excluir_ventas = ['C&B Online ADMINISTRATIVO']
 df_v = df_v.loc[~df_v.Local.isin(local_excluir_ventas)] # Excluir local de archivo ventas  
-
 df_v['Día'] = pd.to_datetime(df_v['Día'], format='%d/%m/%Y')
 df_v['Número de Vendedor (Cod.)'] = pd.to_numeric(df_v['Número de Vendedor (Cod.)'])
 df_v['Venta en $'] = pd.to_numeric(df_v['Venta en $'])
@@ -93,6 +93,7 @@ nc.loc[nc['Desc_local']=='MARTINA FONTANAR', 'Desc_local'] = 'FONTANAR'
 nc.loc[nc['Desc_local']=='EXPO HAYUELOS', 'Desc_local'] = 'HAYUELOS'
 # TODO df_v = df_v.loc[df_v['Día'] == '2021-09-20']
 
+# -----------------------------------------------------------
 ## -------------- Por mes 
 
 initial_date = pd.to_datetime(date.today() - timedelta(days=30))
@@ -138,7 +139,7 @@ r5['Costo_Venta-Tienda'] = r5.groupby(['Desc_local'])['Costo_Venta-Empleado'].tr
 r5['NC/Venta-Empleado'] = r5['Costo_NC-Empleado']/r5['Costo_Venta-Empleado']
 r5['Costo_NC-Empleado/Costo_NC-Tienda'] = r5['Costo_NC-Empleado']/r5['Costo_NC-Tienda']
 r5['CVenta-Empleado/CVenta-Tienda'] = r5['Costo_Venta-Empleado']/r5['Costo_Venta-Tienda']
-
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Notas crédito diarias mayores a 100 mil 
 ncs_groupby = nme3.groupby(['Cautoriza', 'Desc_local', 'Dcompra_nvo', 'Nterminal_nvo','Nsecuencia_nvo', 'Hora', 'Cod_Empleado','Num_Documento', 'nombre_completo', 'Cargo']).agg({'SKU':'nunique', 'Qcantidad':'sum', 'Costo_NC-Empleado':'sum'}).reset_index()
 ncs_groupby.loc[:, ['Grabación?', 'Cliente?', 'Producto?']] = [np.nan, np.nan, np.nan]
@@ -149,7 +150,7 @@ r6 = ncs_groupby.loc[(ncs_groupby.Hora <=1000)|((ncs_groupby.Hora >=2100))]
 
 def guardar_res_tienda(df_mes, df_dia, df_hora, df_monto, df_nc_daily, tienda, date):
        date_str = date.strftime('%y%m%d')
-       path = rf'C:/Users/palejparra/Falabella/JPPs - Análisis de notas crédito - {tienda} - {tienda}'
+       path = rf'C:/Users/ext_maperezr/Falabella/JPPs - Análisis de notas crédito - {tienda} - {tienda}'
        writer = pd.ExcelWriter(f'{path}/{date_str} {tienda}.xlsx', engine='xlsxwriter')
        df_hora.loc[df_hora.Desc_local == tienda].to_excel(writer, sheet_name='Alertas x hora', index=False)
        df_monto.loc[df_monto.Desc_local == tienda].to_excel(writer, sheet_name='Alertas x monto', index=False)
@@ -195,6 +196,8 @@ df_nc.Mventa_nc = -pd.to_numeric(df_nc.Mventa_nc)
 df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('oct', '10')
 df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('nov', '11')
 df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('dic', '12')
+df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('ene', '01')
+df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('feb', '02')
 
 df_nc.Dcompra_nvo = pd.to_datetime(df_nc.Dcompra_nvo, format='%d-%m-%Y') # TODO arreglar para español 
 
