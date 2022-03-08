@@ -25,10 +25,10 @@ class SANTIAGO_CORE():
         self.change_format_date()
         self.set_filter()
         self.last_date = self.df_nc.Dcompra_nvo.max()
-        alertas = self.alertas()
-        locales = self.df_nc.Desc_local.unique().tolist()
-        for local in locales:
-            self.guardar_res_tienda(alertas[0], alertas[1], alertas[2], alertas[3], local)
+        # alertas = self.alertas()
+        # locales = self.df_nc.Desc_local.unique().tolist() 
+        # for local in locales:
+        #     self.guardar_res_tienda(alertas[0], alertas[1], alertas[2], alertas[3], local)
 
     def unir_ncs(self):
        path = 'input/archivo_ncs/'
@@ -89,12 +89,12 @@ class SANTIAGO_CORE():
         ld_str = self.last_date.strftime('%d-%b-%y')
         res = df_ld.groupby(['Desc_local']).agg({'Cautoriza':'nunique', 'Mventa_nc':'sum'})
         return res, ld_str
-
-    def alertas(self): 
+    
+    def alertas(self):
         lista_hojas = []
-        for i in [self.initial_date, self.last_date]:
-            nc_t = self.df_nc.loc[self.df_nc.Dcompra_nvo >= i]
-            df_v = self.df_v.loc[self.df_v['Día']>= i]
+        for i in enumerate([self.initial_date,self.last_date]):
+            nc_t = self.df_nc.loc[self.df_nc.Dcompra_nvo >= i[1]]
+            df_v = self.df_v.loc[self.df_v['Día']>= i[1]]
             # Merging files  
             nme = nc_t.merge(self.ep, how='left', left_on=['Cvendedor'], right_on=['Cod_Empleado'])
             nme2 = nme.loc[nme.Num_Documento.notna()]
@@ -108,13 +108,15 @@ class SANTIAGO_CORE():
             r2['Costo_NC-Empleado/Costo_NC-Tienda'] = r2['Costo_NC-Empleado']/r2['Costo_NC-Tienda']
             r2['CVenta-Empleado/CVenta-Tienda'] = r2['Costo_Venta-Empleado']/r2['Costo_Venta-Tienda']
             lista_hojas.append(r2)
+        alert_x_ced = nme.loc[nme['Nrutcomprador'] == nme['Num_Documento']].reset_index()
+        alert_x_ced["Tipo alerta"] = "Alerta x cedula"
         ncs_groupby = nme2.groupby(['Cautoriza', 'Desc_local', 'Dcompra_nvo', 'Nterminal_nvo','Nsecuencia_nvo', 'Hora', 'Cod_Empleado','Num_Documento', 'nombre_completo', 'Cargo']).agg({'SKU':'nunique', 'Qcantidad':'sum', 'Costo_NC-Empleado':'sum'}).reset_index()
         ncs_groupby.loc[:, ['Grabación?', 'Cliente?', 'Producto?']] = [np.nan, np.nan, np.nan]
         mayores_cienmil = ncs_groupby.loc[ncs_groupby['Costo_NC-Empleado']>=100000].reset_index()
         mayores_cienmil["Tipo alerta"] = "Alerta x monto"
         alertas_x_hora = ncs_groupby.loc[(ncs_groupby.Hora <=1000)|((ncs_groupby.Hora >=2100))].reset_index()
         alertas_x_hora["Tipo alerta"] = "Alerta x Hora"
-        alertas = pd.concat([mayores_cienmil,alertas_x_hora])
+        alertas = pd.concat([mayores_cienmil,alertas_x_hora,alert_x_ced])
         alertas = alertas.reindex(columns=["Tipo alerta","Cautoriza","Desc_local","Dcompra_nvo","Nterminal_nvo","Nsecuencia_nvo","Hora","Cod_Empleado","Num_Documento","nombre_completo","Cargo","SKU","Qcantidad","Costo_NC-Empleado","Grabación?","Cliente?","Producto?"])
         lista_hojas.append(alertas)
         lista_hojas.append(nc_t)
