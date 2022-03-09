@@ -82,7 +82,7 @@ class SANTIAGO_CORE():
         self.df_nc.loc[self.df_nc['Desc_local']=='MARTINA FONTANAR', 'Desc_local'] = 'FONTANAR'
         self.df_nc.loc[self.df_nc['Desc_local']=='EXPO HAYUELOS', 'Desc_local'] = 'HAYUELOS'
         self.df_teams = self.df_nc.copy()
-        self.df_nc = self.df_nc.loc[self.df_nc['Cvendedor']!=47708] # Default seller 
+        # self.df_nc = self.df_nc.loc[self.df_nc['Cvendedor']!=47708] # Default seller 
 
     def get_df_teams(self):
         df_ld = self.df_teams[self.df_teams.Dcompra_nvo == self.last_date]
