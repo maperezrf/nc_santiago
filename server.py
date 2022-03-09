@@ -58,6 +58,9 @@ mean_norm = current_norm.groupby('Desc_local')['Cautoriza'].mean().sort_values(a
 # ---------- Filters
 hora = alertas.loc[alertas.tipo_alerta=='hora'].reset_index()
 monto = alertas.loc[alertas.tipo_alerta=='monto'].reset_index()
+ced_0= con.loc[con.Nrutcomprador == "0" ] 
+ced_1= con.loc[con.Nrutcomprador == "1" ] 
+ced_2= con.loc[con.Nrutcomprador == "2" ] 
 
 # ---------- Groupby's
 gb_cant_mes = con.groupby(['mes-nc'], sort=False)['Cautoriza'].nunique().reset_index()
@@ -65,8 +68,23 @@ gb_cant_mes = con.groupby(['mes-nc'], sort=False)['Cautoriza'].nunique().reset_i
 h_x_fig = hora.groupby(["Desc_local","indicador"]).agg({"Cautoriza":"nunique",}).reset_index().sort_values("Cautoriza", ascending=False)
 m_x_fig = monto.groupby(["Desc_local","indicador"]).agg({"Cautoriza":"nunique",}).reset_index().sort_values("Cautoriza", ascending=False)
 gb_estado_alerta = alertas.groupby('indicador')['Cautoriza'].nunique().reset_index()
+gb_cant_dias_tienda = con.groupby(['Dcompra_nvo', 'Desc_local'])['Cautoriza'].nunique().reset_index()
+lista_tiendas_mean = mean_norm.groupby(['Desc_local'])['Cautoriza'].mean().sort_values(ascending=False).keys()
+gb_cant_dias_tienda.loc[gb_cant_dias_tienda.Desc_local.isin(lista_tiendas_mean[0:9]), 'nc_rank'] = 'Alta'
+gb_cant_dias_tienda.loc[gb_cant_dias_tienda.Desc_local.isin(lista_tiendas_mean[9:18]), 'nc_rank'] = 'Media'
+gb_cant_dias_tienda.loc[gb_cant_dias_tienda.Desc_local.isin(lista_tiendas_mean[18:26]), 'nc_rank'] = 'Baja'
 diferencia_dias = con.groupby("dif_dias")["Cautoriza"].nunique().reset_index()
+ced_0 = ced_0.groupby(["Desc_local","Dcompra_nvo"])["Cvendedor"].nunique().sort_values(ascending=False).reset_index()
+ced_1 = ced_1.groupby(["Desc_local","Dcompra_nvo"])["Cvendedor"].nunique().sort_values(ascending=False).reset_index()
+ced_2 = ced_2.groupby(["Desc_local","Dcompra_nvo"])["Cvendedor"].nunique().sort_values(ascending=False).reset_index()
+top_20_clientes_nc = con.groupby("Nrutcomprador")["Cautoriza"].nunique().reset_index().sort_values("Cautoriza",ascending=False)
+
 # ---------- Graphs
+## Alertas x mismo vendedor y cliente 
+alerta_igual_vend_clien = con.loc[con["Num_Documento"] == con["Nrutcomprador"]] 
+
+## Top 20 clientes con mas NCs en consolidado
+top_20_clientes_nc = top_20_clientes_nc.loc[~top_20_clientes_nc.Nrutcomprador.isin(["0","1","2"])].head(20)
 
 ## Cantidad de NCs según mes de creación
 fig = px.bar(gb_cant_mes, x="mes-nc", y="Cautoriza", text='Cautoriza', title='Cantidad de NCs según mes de creación',
@@ -90,11 +108,9 @@ y=0.95, xanchor="left", x=0.7))
 fig_alerta = px.pie(gb_estado_alerta, values='Cautoriza', names='indicador', 
 title='Estado de revisión',color_discrete_sequence=['rgb(170, 57, 57)','rgb(45, 136, 45)'])
 
-
 ## Diferencia dias venta NCs
 dias_graf = px.bar(diferencia_dias, x="dif_dias", y="Cautoriza",title = "Diferencia de días entre venta y NCs",labels={"Cautoriza":"Cantidad","dif_dias":"Dias"})
 dias_graf.update_layout(xaxis_categoryorder = 'total descending')
-
 
 ## Cantidad de NCs en tiendas
 fig_cant_nc_dias_tienda = px.scatter(gb_cant_dias_tienda, x='Dcompra_nvo', y='Cautoriza', color='Desc_local', 
@@ -107,6 +123,12 @@ fig_cant_nc_dias_tienda_rank = px.scatter(gb_cant_dias_tienda, x='Dcompra_nvo', 
                                      hover_data=['Dcompra_nvo', 'Desc_local', 'Cautoriza', 'nc_rank'], 
                                      title='Cantidad de NCs en tiendas', labels={'Cautoriza':'Cantidad de NCs', 'Dcompra_nvo':'Fecha de creación de NC', 'nc_rank':'Rank'},
                                      height=700)
+
+## Creacion de NCs con cedulas 0, 1, 2
+graf_ced_0 = px.bar(ced_0, x="Dcompra_nvo", y="Cvendedor", color="Desc_local",title="Creación de NCs numero de cedula : 0", labels={"Dcompra_nvo":"Fecha creacion","Cvendedor":"Código vendedor"})
+graf_ced_1 = px.bar(ced_1, x="Dcompra_nvo", y="Cvendedor", color="Desc_local",title="Creación de NCs numero de cedula : 1", labels={"Dcompra_nvo":"Fecha creacion","Cvendedor":"Código vendedor"} )
+graf_ced_2 = px.bar(ced_1, x="Dcompra_nvo", y="Cvendedor", color="Desc_local",title="Creación de NCs numero de cedula : 2", labels={"Dcompra_nvo":"Fecha creacion","Cvendedor":"Código vendedor"} )
+
 # ---------- Tabs
 
 ## Alertas
@@ -217,8 +239,7 @@ promedios_content = dbc.Card(
 historico_tabs = dbc.Tabs(
     [   dbc.Tab(dia_content, label="Por día"),
         dbc.Tab(mes_content, label="Por mes"),
-        dbc.Tab(promedios_content, label="Promedios"),
-        
+        dbc.Tab(promedios_content, label="Promedios"),   
     ]
 )
 
