@@ -5,6 +5,7 @@ from matplotlib.pyplot import title
 import plotly.express as px
 import pandas as pd
 import dash_bootstrap_components as dbc 
+import constants as const
 
 # ---------- Init
 app = Dash(__name__,external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
@@ -29,6 +30,34 @@ CONTENT_STYLE = {
 # ---------- Data 
 con = pd.read_csv('input/con_fixed.csv', dtype=object) # Consolidado con arreglos 
 alertas = pd.read_excel('input/220303_consolidado_alertas_nc.xlsx') # Alertas 
+ep = pd.read_excel('input/211020_empleados_planta.xlsx', dtype=str) 
+
+#----------- collaborator name
+ep['nombre_completo'] = ep['Apell_Paterno'] + ' ' +  ep['Apell_Materno'] + ' ' + ep['Nombre']  
+ep = ep[const.cols_emp_planta]
+
+#----------- merge con - ep
+df_con_ep = con.merge(ep, how='left', left_on=['Cvendedor'], right_on=['Cod_Empleado'])
+
+#------------ change format
+df_con_ep.Dcompra_ant = df_con_ep.Dcompra_ant.str.replace('ene', '01')
+df_con_ep.Dcompra_ant = df_con_ep.Dcompra_ant.str.replace('feb', '02')
+df_con_ep.Dcompra_ant = df_con_ep.Dcompra_ant.str.replace('mar', '03')
+df_con_ep.Dcompra_ant = df_con_ep.Dcompra_ant.str.replace('abr', '04')
+df_con_ep.Dcompra_ant = df_con_ep.Dcompra_ant.str.replace('may', '05')
+df_con_ep.Dcompra_ant = df_con_ep.Dcompra_ant.str.replace('jun', '06')
+df_con_ep.Dcompra_ant = df_con_ep.Dcompra_ant.str.replace('jul', '07')
+df_con_ep.Dcompra_ant = df_con_ep.Dcompra_ant.str.replace('ago', '08')
+df_con_ep.Dcompra_ant = df_con_ep.Dcompra_ant.str.replace('sep', '09')
+df_con_ep.Dcompra_ant = df_con_ep.Dcompra_ant.str.replace('oct', '10')
+df_con_ep.Dcompra_ant = df_con_ep.Dcompra_ant.str.replace('nov', '11')
+df_con_ep.Dcompra_ant = df_con_ep.Dcompra_ant.str.replace('dic', '12')
+df_con_ep.Dcompra_ant = pd.to_datetime(df_con_ep.Dcompra_ant, format='%d-%m-%Y') # TODO arreglar para español +
+df_con_ep.Dcompra_nvo = pd.to_datetime(df_con_ep.Dcompra_nvo, format='%Y-%m-%d') # TODO arreglar para español 
+
+# --------------get days difference 
+df_con_ep["dif_dias"] = (df_con_ep.Dcompra_nvo - df_con_ep.Dcompra_ant).dt.days
+
 
 # ---------- Filters
 hora = alertas.loc[alertas.tipo_alerta=='hora'].reset_index()
@@ -40,7 +69,7 @@ gb_cant_mes = con.groupby(['mes-nc'], sort=False)['Cautoriza'].nunique().reset_i
 h_x_fig = hora.groupby(["Desc_local","indicador"]).agg({"Cautoriza":"nunique",}).reset_index().sort_values("Cautoriza", ascending=False)
 m_x_fig = monto.groupby(["Desc_local","indicador"]).agg({"Cautoriza":"nunique",}).reset_index().sort_values("Cautoriza", ascending=False)
 gb_estado_alerta = alertas.groupby('indicador')['Cautoriza'].nunique().reset_index()
-
+diferencia_dias = df_con_ep.groupby("dif_dias")["Cautoriza"].nunique().reset_index()
 # ---------- Graphs
 
 ## Cantidad de NCs según mes de creación
@@ -64,6 +93,10 @@ y=0.95, xanchor="left", x=0.7))
 ## Estado de revisión
 fig_alerta = px.pie(gb_estado_alerta, values='Cautoriza', names='indicador', 
 title='Estado de revisión',color_discrete_sequence=['rgb(170, 57, 57)','rgb(45, 136, 45)'])
+
+## Diferencia dias venta NCs
+dias_graf = px.bar(diferencia_dias, x="dif_dias", y="Cautoriza",title = "Diferencia de días entre venta y NCs",labels={"Cautoriza":"Cantidad","dif_dias":"Dias"})
+dias_graf.update_layout(xaxis_categoryorder = 'total descending')
 
 # ---------- Tabs
 
