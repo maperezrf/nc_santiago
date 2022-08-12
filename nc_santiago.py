@@ -39,7 +39,7 @@ unir_ncs() # method call
 ep = pd.read_excel('input/211020_empleados_planta.xlsx', dtype='object') 
 et = pd.read_excel('input/211020_empleados_temporales.xlsx', dtype='object')
 df_nc = pd.read_csv('input/consolidado_nc.csv', dtype='object')
-df_v = pd.read_excel('input/consolidado_ventas_21.xlsx', dtype='object') # Ventas 
+df_v = pd.read_excel('input/consolidado_ventas_21.xlsx',dtype='object')
 
 # Convert numeric and date data 
 df_nc.Qcantidad = pd.to_numeric(df_nc.Qcantidad)
@@ -53,12 +53,17 @@ df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('nov', '11')
 df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('dic', '12')
 df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('ene', '01')
 df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('feb', '02')
+df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('mar', '03')
+df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('abr', '04')
+df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('may', '05')
+df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('jun', '06')
+df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('jul', '07')
 
 df_nc.Dcompra_nvo = pd.to_datetime(df_nc.Dcompra_nvo, format='%d-%m-%Y') # TODO arreglar para español 
 
 local_excluir_ventas = ['C&B Online ADMINISTRATIVO']
 df_v = df_v.loc[~df_v.Local.isin(local_excluir_ventas)] # Excluir local de archivo ventas  
-df_v['Día'] = pd.to_datetime(df_v['Día'], format='%d/%m/%Y')
+df_v['Día'] = pd.to_datetime(df_v['Día'])
 df_v['Número de Vendedor (Cod.)'] = pd.to_numeric(df_v['Número de Vendedor (Cod.)'])
 df_v['Venta en $'] = pd.to_numeric(df_v['Venta en $'])
 
@@ -150,7 +155,10 @@ r6 = ncs_groupby.loc[(ncs_groupby.Hora <=1000)|((ncs_groupby.Hora >=2100))]
 
 def guardar_res_tienda(df_mes, df_dia, df_hora, df_monto, df_nc_daily, tienda, date):
        date_str = date.strftime('%y%m%d')
-       path = rf'C:/Users/ext_maperezr/Falabella/JPPs - Análisis de notas crédito - {tienda} - {tienda}'
+       if tienda == "TIENDA ALEGRA":
+              path = rf'C:/Users/ext_maperezr/Falabella/JPPs - Análisis de notas crédito - {tienda}'
+       else:
+              path = rf'C:/Users/ext_maperezr/Falabella/JPPs - Análisis de notas crédito - {tienda} - {tienda}'
        writer = pd.ExcelWriter(f'{path}/{date_str} {tienda}.xlsx', engine='xlsxwriter')
        df_hora.loc[df_hora.Desc_local == tienda].to_excel(writer, sheet_name='Alertas x hora', index=False)
        df_monto.loc[df_monto.Desc_local == tienda].to_excel(writer, sheet_name='Alertas x monto', index=False)
@@ -198,6 +206,11 @@ df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('nov', '11')
 df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('dic', '12')
 df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('ene', '01')
 df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('feb', '02')
+df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('mar', '03')
+df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('abr', '04')
+df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('may', '05')
+df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('jun', '06')
+df_nc.Dcompra_nvo = df_nc.Dcompra_nvo.str.replace('jul', '07')
 
 df_nc.Dcompra_nvo = pd.to_datetime(df_nc.Dcompra_nvo, format='%d-%m-%Y') # TODO arreglar para español 
 
@@ -215,14 +228,12 @@ ld_str = last_date.strftime('%d-%b-%y')
 res = df_ld.groupby(['Desc_local']).agg({'Cautoriza':'nunique', 'Mventa_nc':'sum'})
 
 for tienda, row in res.iterrows():
-    monto = f'$ {row["Mventa_nc"]/1e6:,.1f} M'
-    cantidad = str(row['Cautoriza'])
-    send_msg(tienda, dwt[tienda], dst[tienda], dct[tienda], cantidad, monto, ld_str)
-    guardar_res_tienda(r2, r5, r6, mayores_cienmil, nc_dia, tienda, last_date)
+       monto = f'$ {row["Mventa_nc"]/1e6:,.1f} M'
+       cantidad = str(row['Cautoriza'])
+       send_msg(tienda, dwt[tienda], dst[tienda], dct[tienda], cantidad, monto, ld_str)
+       guardar_res_tienda(r2, r5, r6, mayores_cienmil, nc_dia, tienda, last_date)
 
 qty = str(res.Cautoriza.sum())
 monto = f'$ {round(res.Mventa_nc.sum()/1e6)} M'
 
 send_msg_general(dwt['GENERAL'], qty, monto, ld_str)
-
-## -- Fin webhook
