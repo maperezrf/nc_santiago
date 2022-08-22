@@ -13,7 +13,8 @@ for tienda, row in res.iterrows():
     cantidad_cm = f'{row["Cautoriza_cm"]:,.0f}'
     monto_cm = f'$ {row["Costo_NC-Empleado_cm"]/1e6:,.1f} M'
     print(f'{monto_nc}, {cantidad_nc}, {cantidad_cm}, {monto_cm}')
-    teams.send_msg(tienda, dwt[tienda],dst[tienda], dct[tienda], cantidad_nc, monto_nc, ld_str, cantidad_cm, monto_cm)
+    teams.send_msg(tienda, dwt['peruba'],dst[tienda], dct[tienda], cantidad_nc, monto_nc, ld_str, cantidad_cm, monto_cm)
+    sant.guardar_res_tienda(alertas[0], alertas[1], alertas[2], alertas[3], tienda)
 
 cm = res.loc[res.Cautoriza_cm > 0].index
 cm_cant = f'{res["Cautoriza_cm"].sum():,.0f}'
