@@ -94,10 +94,22 @@ class SANTIAGO_CORE():
         # self.df_teams = self.nc_df.copy() 
 
     def get_df_teams(self):
-        print('Obteniendo datos teams')
-        df_ld = self.nc_df[self.nc_df.Dcompra_nvo == self.last_date]
-        ld_str = self.last_date.strftime('%d-%b-%y')
-        res = df_ld.groupby(['Desc_local']).agg({'Cautoriza':'nunique', 'Costo_NC-Empleado':'sum'})
+        last_date= self.nc_df.Dcompra_nvo.max()
+        df_ld = self.nc_df[self.nc_df.Dcompra_nvo == last_date]
+        ld_str = last_date.strftime('%d-%b-%y')
+        df_nc = df_ld.loc[df_ld['Cautoriza'] != '10009'].reset_index(drop=True)
+        df_cm = df_ld.loc[df_ld['Cautoriza'] == '10009'].reset_index(drop=True)
+        df_nc.rename(columns = {'Cautoriza':'Cautoriza_nc','Costo_NC-Empleado' :'Costo_NC-Empleado_nc'}, inplace = True)
+        df_cm.rename(columns = {'Cautoriza':'Cautoriza_cm','Costo_NC-Empleado' :'Costo_NC-Empleado_cm'}, inplace = True)
+        res_nc = df_nc.groupby(['Desc_local']).agg({'Cautoriza_nc':'nunique','Costo_NC-Empleado_nc':'sum'})
+        res_cm = df_cm.groupby(['Desc_local']).agg({'Cautoriza_cm':'nunique', 'Costo_NC-Empleado_cm':'sum'})
+        res = pd.concat([res_nc, res_cm], axis=1 ).reset_index()
+        res.fillna('0', inplace=True)
+        res['Cautoriza_cm'] = pd.to_numeric(res['Cautoriza_cm'])
+        res['Costo_NC-Empleado_nc'] = pd.to_numeric(res['Costo_NC-Empleado_nc'])
+        res['Costo_NC-Empleado_cm'] = pd.to_numeric(res['Costo_NC-Empleado_cm'])
+        res['Cautoriza_nc'] = pd.to_numeric(res['Cautoriza_nc'])
+        res.set_index('Desc_local',inplace = True)
         return res, ld_str
     
     def alertas(self):
@@ -133,7 +145,7 @@ class SANTIAGO_CORE():
             print('Se encontraron codigos maestros')
             print(alertas_cod_ma) 
         else:
-            print('No se encontraron codigos maestros')
+            print('--------------- No se encontraron codigos maestros ---------------')
         alertas_cod_ma["Tipo alerta"] = "Codigo maestro"
         alertas = pd.concat([mayores_cienmil,alertas_x_hora,alert_x_ced,alertas_cod_ma])
         alertas = alertas.reindex(columns=["Tipo alerta","Cautoriza","Desc_local","Dcompra_nvo","Nterminal_nvo","Nsecuencia_nvo","Hora","Cod_Empleado","Num_Documento","nombre_completo","Cargo","SKU","Qcantidad","Costo_NC-Empleado","Grabación?","Cliente?","Producto?","Observaciones"])
@@ -148,11 +160,11 @@ class SANTIAGO_CORE():
         else:
             path = f'{self.path}\JPPs - Análisis de notas crédito - {tienda} - {tienda}'
         date_str = self.last_date.strftime('%y%m%d')
-        writer = pd.ExcelWriter(f'{path}/{date_str} {tienda}.xlsx', engine='xlsxwriter')
-        alertas.loc[alertas.Desc_local == tienda].to_excel(writer, sheet_name='Alertas', index=False)
-        df_dia.loc[df_dia.Desc_local == tienda].to_excel(writer, sheet_name='Empleados x Día', index=False)
-        df_mes.loc[df_mes.Desc_local == tienda].to_excel(writer, sheet_name='Empleados x Mes', index=False)
-        df_nc_daily.loc[df_nc_daily.Desc_local==tienda].to_excel(writer, sheet_name=f'NCs {date_str}', index=False)
+        writer = pd.ExcelWriter(f'{path}/{date_str} {tienda}.xlsx', engine = 'xlsxwriter')
+        alertas.loc[alertas.Desc_local == tienda].to_excel(writer, sheet_name = 'Alertas', index=False)
+        df_dia.loc[df_dia.Desc_local == tienda].to_excel(writer, sheet_name = 'Empleados x Día', index=False)
+        df_mes.loc[df_mes.Desc_local == tienda].to_excel(writer, sheet_name = 'Empleados x Mes', index=False)
+        df_nc_daily.loc[df_nc_daily.Desc_local == tienda].to_excel(writer, sheet_name = f'NCs {date_str}', index=False)
         writer.save()
 
 
