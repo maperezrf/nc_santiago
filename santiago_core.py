@@ -1,4 +1,5 @@
 from datetime import datetime
+from textwrap import indent
 import pandas as pd 
 import numpy as np 
 import io
@@ -142,7 +143,7 @@ class SANTIAGO_CORE():
         codm_groupby = nme2.groupby(['Cautoriza', 'Desc_local', 'Dcompra_nvo', 'Nterminal_nvo', 'Nsecuencia_nvo', 'Hora']).agg({'SKU':'nunique', 'Qcantidad':'sum', 'Costo_NC-Empleado':'sum'}).reset_index()
         alertas_cod_ma = codm_groupby.loc[codm_groupby['Cautoriza'] == "10009"].reset_index()
         if alertas_cod_ma.shape[0]> 0:
-            print('Se encontraron codigos maestros')
+            print('--------------- Se encontraron codigos maestros ---------------')
             print(alertas_cod_ma) 
         else:
             print('--------------- No se encontraron codigos maestros ---------------')
@@ -154,7 +155,6 @@ class SANTIAGO_CORE():
         return lista_hojas
 
     def guardar_res_tienda(self,df_mes, df_dia, alertas, df_nc_daily, tienda):
-        print('Guardando archivos...')
         if tienda == "TIENDA ALEGRA":
              path = f'{self.path}\JPPs - Análisis de notas crédito - {tienda}'
         else:
@@ -167,6 +167,8 @@ class SANTIAGO_CORE():
         df_nc_daily.loc[df_nc_daily.Desc_local == tienda].to_excel(writer, sheet_name = f'NCs {date_str}', index=False)
         writer.save()
 
-
-    
-
+    def save_res_cod_m(self):
+        res = self.nc_df.rename(columns={'Local_creacion':'Local_nc', 'Desc_local':'Desc_local_nc', 'Dcompra_nvo':'Fecha_nc', 'Nterminal_nvo':'Nterminal_nc', 'Nsecuencia_nvo':'Nsecuencia_nc', 'Cautoriza':'Cautoriza_nc', 'Local_ant':'Local_venta','Descr_local_ant':'Descr_local_venta', 'Dcompra_ant':'Fecha_venta','Nterminal_ant':'Nterminal_venta', 'Nsecuencia_ant':'Nsecuencia_venta','Cvendedor_ant':'Cvendedor_venta', 'Xtipificacion':'motivo'})
+        res = res.loc[(res['Cautoriza_nc'] == 10009) & (res['Fecha_nc'] == self.last_date) ,['Local_venta', 'Descr_local_venta','Fecha_venta', 'Nterminal_venta', 'Nsecuencia_venta', 'Cvendedor_venta','Local_nc', 'Desc_local_nc', 'Fecha_nc', 'Nterminal_nc','Nsecuencia_nc', 'Tipo_trx', 'Cautoriza_nc','Linea', 'LiDescripcion', 'SKU', 'EAN', 'PDescripcion', 'Cmarca', 'Tipo Producto', 'Nrutcomprador', 'Qcantidad','Costo_NC-Empleado', 'motivo']] 
+        date_str = self.last_date.strftime('%y%m%d')
+        res.to_excel(f'{self.path}\JPPs - Análisis de notas crédito - General - Códigos Maestros/{date_str}_cm.xlsx', index = False)
