@@ -8,7 +8,7 @@ from os import listdir
 from os.path import isfile, join
 import constants as const
 
-class SANTIAGO_CORE():
+class selfIAGO_CORE():
     nc_df =pd.DataFrame()
     dt_string = datetime.now().strftime('%y%m%d')
     with open('config\path.txt', "r") as tf:
@@ -169,6 +169,7 @@ class SANTIAGO_CORE():
 
     def save_res_cod_m(self):
         res = self.nc_df.rename(columns={'Local_creacion':'Local_nc', 'Desc_local':'Desc_local_nc', 'Dcompra_nvo':'Fecha_nc', 'Nterminal_nvo':'Nterminal_nc', 'Nsecuencia_nvo':'Nsecuencia_nc', 'Cautoriza':'Cautoriza_nc', 'Local_ant':'Local_venta','Descr_local_ant':'Descr_local_venta', 'Dcompra_ant':'Fecha_venta','Nterminal_ant':'Nterminal_venta', 'Nsecuencia_ant':'Nsecuencia_venta','Cvendedor_ant':'Cvendedor_venta', 'Xtipificacion':'motivo'})
-        res = res.loc[(res['Cautoriza_nc'] == 10009) & (res['Fecha_nc'] == self.last_date) ,['Local_venta', 'Descr_local_venta','Fecha_venta', 'Nterminal_venta', 'Nsecuencia_venta', 'Cvendedor_venta','Local_nc', 'Desc_local_nc', 'Fecha_nc', 'Nterminal_nc','Nsecuencia_nc', 'Tipo_trx', 'Cautoriza_nc','Linea', 'LiDescripcion', 'SKU', 'EAN', 'PDescripcion', 'Cmarca', 'Tipo Producto', 'Nrutcomprador', 'Qcantidad','Costo_NC-Empleado', 'motivo']] 
+        res = res.loc[(res['Cautoriza_nc'] == '10009') & (res['Fecha_nc'] == self.last_date) ,['Local_venta', 'Descr_local_venta','Fecha_venta', 'Nterminal_venta', 'Nsecuencia_venta', 'Cvendedor_venta','Local_nc', 'Desc_local_nc', 'Fecha_nc', 'Nterminal_nc','Nsecuencia_nc', 'Tipo_trx', 'Cautoriza_nc','Linea', 'LiDescripcion', 'SKU', 'EAN', 'PDescripcion', 'Cmarca', 'Tipo Producto', 'Nrutcomprador', 'Qcantidad','Costo_NC-Empleado', 'motivo']] 
         date_str = self.last_date.strftime('%y%m%d')
-        res.to_excel(f'{self.path}\JPPs - Análisis de notas crédito - General - Códigos Maestros/{date_str}_cm.xlsx', index = False)
+        if res.shape[0] > 0 :
+            res.to_excel(f'{self.path}\JPPs - Análisis de notas crédito - General - Códigos Maestros/{date_str}_cm.xlsx', index = False)
