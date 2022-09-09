@@ -8,7 +8,7 @@ from os import listdir
 from os.path import isfile, join
 import constants as const
 
-class selfIAGO_CORE():
+class SANTIAGO_CORE():
     nc_df =pd.DataFrame()
     dt_string = datetime.now().strftime('%y%m%d')
     with open('config\path.txt', "r") as tf:
