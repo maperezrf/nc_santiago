@@ -147,21 +147,25 @@ class SANTIAGO_CORE():
             print(alertas_cod_ma) 
         else:
             print('--------------- No se encontraron codigos maestros ---------------')
-        alertas_cod_ma["Tipo alerta"] = "Codigo maestro"
-        alertas = pd.concat([mayores_cienmil,alertas_x_hora,alert_x_ced,alertas_cod_ma])
+        alertas_cod_ma.loc[:, ['Factura?', 'Doc identificación?', 'Nc?', 'Coincide NC - Factura?', 'Observaciones']] = [np.nan, np.nan, np.nan, np.nan, np.nan]
+        alertas = pd.concat([mayores_cienmil,alertas_x_hora,alert_x_ced])
         alertas = alertas.reindex(columns=["Tipo alerta","Cautoriza","Desc_local","Dcompra_nvo","Nterminal_nvo","Nsecuencia_nvo","Hora","Cod_Empleado","Num_Documento","nombre_completo","Cargo","SKU","Qcantidad","Costo_NC-Empleado","Grabación?","Cliente?","Producto?","Observaciones"])
         lista_hojas.append(alertas)
         lista_hojas.append(nc_t)
+        lista_hojas.append(alertas_cod_ma)
         return lista_hojas
 
-    def guardar_res_tienda(self,df_mes, df_dia, alertas, df_nc_daily, tienda):
+    def guardar_res_tienda(self,df_mes, df_dia, alertas, df_nc_daily, alertas_cm, tienda):
         if tienda == "TIENDA ALEGRA":
-             path = f'{self.path}\JPPs - Análisis de notas crédito - {tienda}'
+                path = f'{self.path}\JPPs - Análisis de notas crédito - {tienda}'
         else:
             path = f'{self.path}\JPPs - Análisis de notas crédito - {tienda} - {tienda}'
         date_str = self.last_date.strftime('%y%m%d')
         writer = pd.ExcelWriter(f'{path}/{date_str} {tienda}.xlsx', engine = 'xlsxwriter')
         alertas.loc[alertas.Desc_local == tienda].to_excel(writer, sheet_name = 'Alertas', index=False)
+        alertas_cm_t = alertas_cm.loc[alertas_cm.Desc_local == tienda]
+        if alertas_cm_t.shape[0] > 0:
+            alertas_cm_t.to_excel(writer, sheet_name = 'Codigos maestros', index=False)
         df_dia.loc[df_dia.Desc_local == tienda].to_excel(writer, sheet_name = 'Empleados x Día', index=False)
         df_mes.loc[df_mes.Desc_local == tienda].to_excel(writer, sheet_name = 'Empleados x Mes', index=False)
         df_nc_daily.loc[df_nc_daily.Desc_local == tienda].to_excel(writer, sheet_name = f'NCs {date_str}', index=False)
