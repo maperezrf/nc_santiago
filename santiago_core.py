@@ -9,6 +9,7 @@ from os.path import isfile, join
 import constants as const
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.styles import Protection 
+from openpyxl import load_workbook
 
 class SANTIAGO_CORE():
     nc_df =pd.DataFrame()
@@ -172,6 +173,7 @@ class SANTIAGO_CORE():
         df_mes.loc[df_mes.Desc_local == tienda].to_excel(writer, sheet_name = 'Empleados x Mes', index=False)
         df_nc_daily.loc[df_nc_daily.Desc_local == tienda].to_excel(writer, sheet_name = f'NCs {date_str}', index=False)
         writer.save()
+        drop_down_block(path)
 
     def save_res_cod_m(self):
         res = self.nc_df.rename(columns={'Local_creacion':'Local_nc', 'Desc_local':'Desc_local_nc', 'Dcompra_nvo':'Fecha_nc', 'Nterminal_nvo':'Nterminal_nc', 'Nsecuencia_nvo':'Nsecuencia_nc', 'Cautoriza':'Cautoriza_nc', 'Local_ant':'Local_venta','Descr_local_ant':'Descr_local_venta', 'Dcompra_ant':'Fecha_venta','Nterminal_ant':'Nterminal_venta', 'Nsecuencia_ant':'Nsecuencia_venta','Cvendedor_ant':'Cvendedor_venta', 'Xtipificacion':'motivo'})
@@ -180,14 +182,16 @@ class SANTIAGO_CORE():
         if res.shape[0] > 0 :
             res.to_excel(f'{self.path}\JPPs - Análisis de notas crédito - General - Códigos Maestros/{date_str}_cm.xlsx', index = False)
     
-    def drop_down_block(libro):
-        hoja=libro.active
-        dv = DataValidation(type="list", formula1='"SI,NO"', allow_blank=True)
-        hoja.add_data_validation(dv)
-        dv.add('o2:o1048576')
-        dv.add('p2:p1048576')
-        dv.add('q2:q1048576')
-        hoja.protection.sheet = True
-        for col in ['o', 'p','q','r']:
-            for cell in hoja[col]:
-                cell.protection = Protection(locked=False)
+def drop_down_block(path):
+    libro = load_workbook(path)
+    hoja=libro.active
+    dv = DataValidation(type="list", formula1='"SI,NO"', allow_blank=True)
+    hoja.add_data_validation(dv)
+    dv.add('o2:o1048576')
+    dv.add('p2:p1048576')
+    dv.add('q2:q1048576')
+    hoja.protection.sheet = True
+    for col in ['o', 'p','q','r']:
+        for cell in hoja[col]:
+            cell.protection = Protection(locked=False)
+    libro.save(path)
