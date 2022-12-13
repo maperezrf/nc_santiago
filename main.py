@@ -8,7 +8,6 @@ res, ld_str = sant.get_df_teams()
 dwt, dst, dct = teams.get_data_nc()
 
 for tienda, row in res.iterrows():
-    # if tienda not in ['SUBA', 'TIENDA ALEGRA', 'TITAN', 'UNICENTRO', 'VILLA COUNTRY', 'WTC CALI']:
     cantidad_nc = f'{row["Cautoriza_nc"]:,.0f}'
     monto_nc = f'$ {row["Costo_NC-Empleado_nc"]/1e6:,.1f} M'
     cantidad_cm = f'{row["Cautoriza_cm"]:,.0f}'
